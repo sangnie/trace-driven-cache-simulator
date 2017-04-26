@@ -81,6 +81,14 @@ regs if_id, id_ex, ex_mem, mem_wb;
 						isValid = 1;
 					}
 
+					if((strncmp(instruction,"000000",6) == 0) &&(strncmp(instruction + 21,"00000",5) == 0) && (strncmp(instruction + 26,"100001",6) == 0) ) { //addu
+						instructions[nInstr].itype = addu;
+						instructions[nInstr].rs = bin_to_reg(instruction,6);
+						instructions[nInstr].rt = bin_to_reg(instruction,11);
+						instructions[nInstr].rd = bin_to_reg(instruction,16);
+						isValid = 1;
+					}
+
 					if((strncmp(instruction,"001000",6) == 0)) { //addi
 						instructions[nInstr].itype = addi;
 						instructions[nInstr].isImm = 1;
@@ -132,6 +140,62 @@ regs if_id, id_ex, ex_mem, mem_wb;
 						instructions[nInstr].rd = bin_to_reg(instruction,16);
 						isValid = 1;
 					}
+
+					if((strncmp(instruction,"000010",6) == 0) ){ //jump instruction
+						printf("SEEEEEEEEEEEEEEEEE THISSSSSSSSSSSSSSSS -> Busted j\n");
+						instructions[nInstr].itype = j;
+						instructions[nInstr].isImm = 1;
+						if(instruction[6]=='0'){
+							strcpy(instructions[nInstr].immT,"000000");
+						} else{
+							strcpy(instructions[nInstr].immT,"111111");
+						}
+						strcat(instructions[nInstr].immT,instruction + 6);
+						instructions[nInstr].imm = b_imm_to_reg(instructions[nInstr].immT);
+						isValid = 1;
+					}
+
+					if((strncmp(instruction,"000011",6) == 0) ){ //jump and link instruction
+						printf("SEEEEEEEEEEEEEEEEE THISSSSSSSSSSSSSSSS -> Busted jal\n");
+						instructions[nInstr].itype = jal;
+						instructions[nInstr].isImm = 1;
+						if(instruction[6]=='0'){
+							strcpy(instructions[nInstr].immT,"000000");
+						} else{
+							strcpy(instructions[nInstr].immT,"111111");
+						}
+						strcat(instructions[nInstr].immT,instruction + 6);
+						instructions[nInstr].imm = b_imm_to_reg(instructions[nInstr].immT);
+						isValid = 1;
+					}
+
+					if((strncmp(instruction,"000000",6) == 0) && (strncmp(instruction+11,"00000",5) == 0) && (strncmp(instruction,"00000",21) == 0) &&(strncmp(instruction+26,"001001",6) == 0))
+					{ //jalr instruction
+						printf("SEEEEEEEEEEEEEEEEE THISSSSSSSSSSSSSSSS -> Busted jalr\n");
+						instructions[nInstr].itype = jalr;
+						instructions[nInstr].rs = bin_to_reg(instruction,6);
+						instructions[nInstr].rd = bin_to_reg(instruction,11);
+						isValid = 1;
+					}
+
+
+
+					if((strncmp(instruction,"000000",6) == 0) && (strncmp(instruction+11,"000000000000000",15) == 0) &&(strncmp(instruction+26,"001000",6) == 0))
+					{ //jr instruction
+						printf("SEEEEEEEEEEEEEEEEE THISSSSSSSSSSSSSSSS -> Busted jr\n");
+						instructions[nInstr].itype = jr;
+						instructions[nInstr].rs = bin_to_reg(instruction,6);
+						isValid = 1;
+					}		
+
+					if((strncmp(instruction,"00000000000000000",16) == 0) && (strncmp(instruction+21,"00000010010",11) == 0)){
+						printf("SEEEEEEEEEEEEEEEEE THISSSSSSSSSSSSSSSS -> Busted mflo\n");
+						instructions[nInstr].itype = mflo;
+						instructions[nInstr].rd = bin_to_reg(instruction,16);
+						isValid = 1;
+						// printf("WHOOOOOOOOOOOOOOOOOOOOOOOOOOOOOAAAAAAAAAAAAAAAAAAAAAAAAAA %d\n",instructions[nInstr].rd);						
+					} //mflo
+
 					if((strncmp(instruction,"001101",6) == 0)) { 
 						instructions[nInstr].itype = ori;
 						instructions[nInstr].isImm = 1;
@@ -145,6 +209,7 @@ regs if_id, id_ex, ex_mem, mem_wb;
 						}
 						strcat(instructions[nInstr].immT,instruction + 16);
 						instructions[nInstr].imm = bimm_to_reg(instructions[nInstr].immT);
+						printf("HEREEEEEEEEEEEE %d\n", instructions[nInstr].imm);
 						isValid = 1;
 					}
 					if((strncmp(instruction,"000000",6) == 0) && (strncmp(instruction + 26,"000000",6) == 0) ) {
@@ -641,34 +706,12 @@ void* ex_ins(void* instruction_data){
 
 		else{
 			op1=ex_mem.wRsData; 
-			// printf("#####%d\n", mem_wb.rRegWrite);
-			// printf("#####%d\n", id_ex.ritype);
-			// printf("#####%d\n", ex_mem.risRt);
-			// printf("#####%d\n", ex_mem.rRt);
-			// printf("#####%d\n", id_ex.rRs);
-			// printf("#####%d\n", ex_mem.rRd);
-			// printf("#####%d\n", mem_wb.risRt);
-			// printf("#####%d\n", mem_wb.rRt);
-			// printf("#####%d\n", mem_wb.rRd);
-			// printf("#####%d\n", ex_mem.rRegWrite);
 		}
 		
 	}//for source 1 of ALU
 
-
-	// if((ex_mem.rRegWrite == 1) && ((ex_mem.rRd == id_ex.rRt)||(((ex_mem.ritype == 1)||(ex_mem.ritype == 7)||(ex_mem.ritype == 11))&& (ex_mem.rRt == id_ex.rRt)))&& (id_ex.ritype != 11))
-	// {
-	// 	printf("                                 fwdB1\n");
-	// 	// printf("@@@@@@@@@@@@@@@@@@@@@@%d\n",id_ex.ritype );
-	// 	// printf("@@@@@@@@@@@@@@@@@@@@@@%d\n",ex_mem.rRegWrite );
-	// 	// printf("@@@@@@@@@@@@@@@@@@@@@@%d\n", ex_mem.rRd);
-	// 	// printf("@@@@@@@@@@@@@@@@@@@@@@%d\n", ex_mem.rRt);
-	// 	// printf("@@@@@@@@@@@@@@@@@@@@@@%d\n", id_ex.rRt);
-	// 	op2 = ex_mem.rALUResult;
-	// }
 	if((ex_mem.rRegWrite == 1) && (id_ex.ritype != 11) && (ex_mem.ritype != nop) && (((ex_mem.risRt == 1) && (ex_mem.rRt == id_ex.rRt)) || ((ex_mem.risRt == 0) && (ex_mem.rRd == id_ex.rRt))) ){
 		op2 = ex_mem.rALUResult;
-		// printf("                            fwdB1\n");
 	}
 	else{ 
 		// if((mem_wb.rRegWrite == 1) && ((ex_mem.rRd != id_ex.rRt)||(((ex_mem.ritype == 1)||(ex_mem.ritype == 7)||(ex_mem.ritype == 11))&& (ex_mem.rRt != id_ex.rRt))) && ((mem_wb.rRd == id_ex.rRt)||(((mem_wb.ritype == 1)||(mem_wb.ritype == 7)||(mem_wb.ritype == 11)||(ex_mem.ritype == 19)||(ex_mem.ritype == 20))&& (mem_wb.rRt == id_ex.rRt)))&& (id_ex.ritype != 11)){
@@ -690,6 +733,7 @@ void* ex_ins(void* instruction_data){
 	int shamt=id_ex.rshamt; //shift amount
 	int result=id_ex.rALUResult; //for ALU calcualtions of DP instructions
 	long long int mult_result = id_ex.rMultResult;
+	int z;
 	int result_address =0; //for target_address ALU calculations
 	int read_address=0; //gives the reading address
 	int write_address=0; //gives the writing address
@@ -848,6 +892,33 @@ void* ex_ins(void* instruction_data){
 			result = 0;
 			write_address = 0;
 			read_address = 0;
+			break;
+		case 24: //jump instruction
+			result_address = imm; //get the result_address
+			ex_mem.wCond = 2;
+			break;
+		case 25: //jump and link (write to register 31)
+			//jal 
+			// z = (rpc*4 + 4194304) & (4026531840);
+			// result_address = z|(imm << 2);
+			result_address = imm; 
+			ex_mem.wCond = 2;
+			result = (rpc + 1)*4 + 4194304;
+			printf("DEKHOOOOOOOOOOOOOOOOOO YEHHHHHH TARGET ADDRESS %d and RESULT %d %d %d\n",result_address,result,z,imm);
+
+			break;
+		case 26:
+			//jalr
+			break;
+		case 27:
+			//jr
+			break;
+		case 28:
+			result = op2; //pass the operand 1 directly
+			break;
+		case 29:
+			result = registers[33];    //move from LO register
+			break;
 	}
 	ex_mem.wMultResult = mult_result;
 	ex_mem.wALUResult = result;
@@ -858,17 +929,24 @@ void* ex_ins(void* instruction_data){
 	// printf("yay3 %d\n",result );
 
 	if(ex_mem.wCond == 1){   //IF Cond satisfied then add offset to PC.
-		// wpc += (result_address - 4194304) / 4;
 		wpc += (result_address) / 4;
 		w_pc += (result_address) / 4;
-		// printf("............%d\n", (result_address) / 4);
-		// printf("............%d\n",wpc );
-		// printf("............%d\n",w_pc );
-
 		nIdle+=2;
 		ex_mem.witype = 23;
 		id_ex.witype = 23;		//DO SOMETHING ABOUT RACE
 		if_id.witype = 23;		//DO SOMETHING ABOUT RACE
+	}
+
+	if(ex_mem.wCond == 2)
+	{
+		wpc = (result_address - 4194304)/4;
+		w_pc = wpc;
+		nIdle+=2;
+		ex_mem.witype = 23;
+		id_ex.witype = 23;
+		if_id.witype = 23;
+		ex_mem.wCond = 1;
+		printf("kayyyyyyyyyyyy %d\n", wpc);
 	}
 
 	printf("ex_ins\n");
@@ -977,16 +1055,17 @@ void* mem_ins(void* instruction_data){
 		}
 		else
 		{
-			// printf("$$$$$$$$$$$$$$$$$%d\n",mem_wb.rRegWrite);
-			// printf("$$$$$$$$$$$$$$$$$%d\n",ex_mem.rMemWrite );
-			// printf("$$$$$$$$$$$$$$$$$%d\n",ex_mem.ritype );
-			// printf("$$$$$$$$$$$$$$$$$%d\n",mem_wb.risRt );
-			// printf("$$$$$$$$$$$$$$$$$%d\n",ex_mem.rRt );
-			// printf("$$$$$$$$$$$$$$$$$%d\n",mem_wb.rRt );
-			// printf("$$$$$$$$$$$$$$$$$%d\n",mem_wb.rRd );
-			// printf("$$$$$$$$$$$$$$$$$%d\n",mem_wb.wWriteData);
+			printf("$$$$$$$$$$$$$$$$$%d\n",mem_wb.rRegWrite);
+			printf("$$$$$$$$$$$$$$$$$%d\n",ex_mem.rMemWrite );
+			printf("$$$$$$$$$$$$$$$$$%d\n",ex_mem.ritype );
+			printf("$$$$$$$$$$$$$$$$$%d\n",mem_wb.risRt );
+			printf("$$$$$$$$$$$$$$$$$%d\n",ex_mem.rRt );
+			printf("$$$$$$$$$$$$$$$$$%d\n",mem_wb.rRt );
+			printf("$$$$$$$$$$$$$$$$$%d\n",mem_wb.rRd );
+			printf("$$$$$$$$$$$$$$$$$%d\n",mem_wb.wWriteData);
+			printf("$$$$$$$$$$$$$$$$$%d\n",ex_mem.rWriteAdd );
 			memory[ex_mem.rWriteAdd - 268500992] = mem_wb.wWriteData;
-			// printf("yay\n");
+			printf("yay\n");
 		}
 
 		nDcache++;
@@ -1013,7 +1092,7 @@ void* mem_ins(void* instruction_data){
 }
 
 void* write_back_ins(void* instruction_data){
-
+	printf("###################\n");
 	// if(mem_wb.renable == 0){
 	// 	// mem_wb.wenable = 1;
 	// 	pthread_exit(NULL);
@@ -1029,7 +1108,7 @@ void* write_back_ins(void* instruction_data){
 	//RF Write
 	switch(mem_wb.ritype)
 	{
-		case 0: case 2: 
+		case 0: case 2: case 29: case 28:
 		case 5: case 6: case 8:
 		case 9: case 10: case 12:
 		case 13:
@@ -1045,7 +1124,10 @@ void* write_back_ins(void* instruction_data){
 			long long int x = (mem_wb.rReadMultData << 32);
 			registers[33]=x >> 32;
 			break;
-
+		case 25: //for link register
+			printf("chal jaaaaaaaaaaaaaaaaaaaaaaaaaaaaa%d\n",mem_wb.rReadData );
+			registers[31]=mem_wb.rReadData;
+			break;
 		case 19: //lb
 			registers[mem_wb.rRt] = mem_wb.rReadData;
 			// printf("WB: registers[%d] = %d %d\n",mem_wb.rRt, registers[mem_wb.rRt], mem_wb.rReadData );
@@ -1096,6 +1178,8 @@ int main(int argc, char* argv[]){
    	fp2 = fopen(svg_file,"w");
    	fclose(fp2);
    	int run_continuous = 0;
+
+   	registers[29] = 268500992 + 8000000;
 
    	if(nInstr<4) {
    		int number_of_steps=0;
