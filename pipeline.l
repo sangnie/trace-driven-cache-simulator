@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include "decl.h"
+#include "cache.h"
+#include "main.h"
 
 int memory[16777216] = {0};
 int registers[35] = {0};
@@ -24,6 +26,10 @@ int rpc = 0;
 int wpc = 0;
 int r_pc=0;
 int w_pc=0;
+
+int iParams = 1;
+int latency = 0;
+float frequency = 2.0;
 
 regs if_id, id_ex, ex_mem, mem_wb;
 
@@ -370,7 +376,47 @@ regs if_id, id_ex, ex_mem, mem_wb;
 					} else {nInstr++;}
 				}
 
+"[perf_model/l1_icache]" 	{iParams = 1;}
+"[perf_model/l1_icache]" 	{iParams = 0;}
+"[perf_model/l1_ucache]" 	{iParams = 2;}
 
+"perfect = false"	{}
+"cache_size = "[0-9]+		{
+								int value = atoi(yytext + 13);
+								printf("%d\n",value );
+								if(iParams == 0){
+									set_cache_param(CACHE_PARAM_DSIZE, value);
+								}	
+								if(iParams == 1){
+									set_cache_param(CACHE_PARAM_ISIZE, value);
+								}
+								if(iParams == 2){
+									set_cache_param(CACHE_PARAM_USIZE, value);
+								}
+							}
+
+
+"associativity = "(0|1)		{
+								int value = atoi(yytext + 16);
+								printf("%d\n",value );
+								set_cache_param(CACHE_PARAM_ASSOC, value);
+							}
+
+"replacement_policy = lru"	{}
+"writethrough = "(0|1)		{
+								int value = atoi(yytext + 16);
+								printf("%d\n",value );
+								set_cache_param(CACHE_PARAM_WRITETHROUGH, value);
+							}
+
+"block_size = "[0-9]+		{
+								int value = atoi(yytext + 16);
+								printf("%d\n",value );
+								set_cache_param(CACHE_PARAM_BLOCK_SIZE, value);
+							}
+
+"frequency = "[0-9]+("."[0-9]+)? 	{}
+"latency = "[0-9]+ 					{latency = atoi(yytext + 10);}							
 %%
 
 void yyerror(char* s){
@@ -899,8 +945,6 @@ void* ex_ins(void* instruction_data){
 			break;
 		case 25: //jump and link (write to register 31)
 			//jal 
-			// z = (rpc*4 + 4194304) & (4026531840);
-			// result_address = z|(imm << 2);
 			result_address = imm; 
 			ex_mem.wCond = 2;
 			result = (rpc + 1)*4 + 4194304;
@@ -1158,6 +1202,10 @@ void print_regs(){
 int main(int argc, char* argv[]){
 	int i,j;
 	char* svg_file = argv[2]; 
+	
+	yyin = fopen(argv[1], "r");
+	yylex();
+
 	yyin = fopen(argv[1], "r");
 	yylex(); //lexical analyser
 	//create 5 thread ids
