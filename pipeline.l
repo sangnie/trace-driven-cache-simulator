@@ -942,7 +942,6 @@ void* ex_ins(void* instruction_data){
 		wpc = (result_address - 4194304)/4;
 		w_pc = wpc;
 		nIdle+=2;
-		ex_mem.witype = 23;
 		id_ex.witype = 23;
 		if_id.witype = 23;
 		ex_mem.wCond = 1;
